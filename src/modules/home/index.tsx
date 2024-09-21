@@ -11,16 +11,17 @@ import {styles} from './style';
 import {colors} from '../../constant';
 import {useEffect, useState} from 'react';
 import {fetchProduct, fetchProductBySearch} from '../../provider/api-services';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import {clearProductList, updateProductList} from '../../redux/general.slice';
 
 const Home = () => {
   const dispatch = useDispatch();
   const [searchText, setSearchText] = useState('');
-  const [products, setProducts] = useState<any[]>([]);
   const [skip, setSkip] = useState(0);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const productList = useSelector((state: any) => state?.general?.productList);
 
   useEffect(() => {
     fetchProductData(0);
@@ -30,9 +31,8 @@ const Home = () => {
     setLoading(true);
     try {
       const res: any = await fetchProduct({skip});
-      // console.log('Response:', JSON.stringify(res));
       if (res && res.products) {
-        setProducts(prevProducts => [...prevProducts, ...res.products]);
+        dispatch(updateProductList(res.products));
         setTotal(res.total);
         setSkip(skip + 1);
       }
@@ -46,13 +46,13 @@ const Home = () => {
   const searchProducts = async (searchTxt: string) => {
     setLoading(true);
     setIsSearching(true);
-    setProducts([]); // Clear previous products
-    setSkip(0); // Reset pagination
+    dispatch(clearProductList());
+    setSkip(0);
     try {
       const res: any = await fetchProductBySearch({searchTxt});
       console.log('Search Response:', JSON.stringify(res));
       if (res && res.products) {
-        setProducts(res.products);
+        dispatch(updateProductList(res.products));
         setTotal(res.total);
       }
     } catch (e) {
@@ -95,9 +95,9 @@ const Home = () => {
     );
   };
 
-  const renderProduct: ListRenderItem<any> = ({item}) => {
+  const renderProduct: ListRenderItem<any> = ({item, index}: any) => {
     return (
-      <View style={styles.productItemContainer}>
+      <View key={index} style={styles.productItemContainer}>
         <Image
           source={{uri: item.thumbnail}}
           style={styles.productImage}
@@ -123,13 +123,13 @@ const Home = () => {
       {searchBox()}
       <View style={{flex: 1, marginTop: 18}}>
         <FlatList
-          data={products}
+          data={productList}
           renderItem={renderProduct}
           keyExtractor={(item, index) =>
             item.id?.toString() || index.toString()
           }
           onEndReached={loadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.8}
           ListFooterComponent={() =>
             loading ? <ActivityIndicator size="large" /> : null
           }

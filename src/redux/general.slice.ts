@@ -16,7 +16,10 @@ export const generalSlice = createSlice({
   initialState,
   reducers: {
     updateProductList: (state, action: PayloadAction<Array<any>>) => {
-      state.productList = action.payload;
+      state.productList = [...state.productList, ...action.payload];
+    },
+    clearProductList: state => {
+      state.productList = [];
     },
     updateCategoryList: (state, action: PayloadAction<Array<any>>) => {
       state.categoryList = action.payload;
@@ -24,6 +27,7 @@ export const generalSlice = createSlice({
   },
 });
 
-export const {updateProductList, updateCategoryList} = generalSlice.actions;
+export const {updateProductList, updateCategoryList, clearProductList} =
+  generalSlice.actions;
 
 export default generalSlice.reducer;
